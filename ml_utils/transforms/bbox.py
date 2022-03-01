@@ -1,26 +1,6 @@
 import albumentations as A
+import torch
 from albumentations.pytorch.transforms import ToTensorV2
-
-
-class Averager:
-    def __init__(self):
-        self.current_total = 0.0
-        self.iterations = 0.0
-
-    def send(self, value):
-        self.current_total += value
-        self.iterations += 1
-
-    @property
-    def value(self):
-        if self.iterations == 0:
-            return 0
-        else:
-            return 1.0 * self.current_total / self.iterations
-
-    def reset(self):
-        self.current_total = 0.0
-        self.iterations = 0.0
 
 
 def get_train_transform():
@@ -40,5 +20,17 @@ def get_valid_transform():
     ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']))
 
 
-def collate_fn(batch):
-    return tuple(zip(*batch))
+def apply_transform(transforms, target, image):
+    sample = {
+        'image': image,
+        'bboxes': target['boxes'],
+        'labels': target['labels']
+    }
+    sample2 = transforms(**sample)
+    while len(sample2['bboxes']) == 0:
+        sample2 = transforms(**sample)
+
+    image = sample2['image'].float()
+    target['boxes'] = torch.stack(tuple(map(torch.tensor, zip(*sample2['bboxes'])))).permute(1, 0)
+    target['boxes'] = target['boxes'].float()
+    return target, image

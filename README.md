@@ -1,2 +1,2 @@
-# bbox_detection
-code for object detection training
+# ML Utils
+Some useful functions for machine learning

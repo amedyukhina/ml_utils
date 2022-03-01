@@ -1,10 +1,11 @@
 import os
 import unittest
-from ddt import ddt
-import numpy as np
 
+import numpy as np
 import pandas as pd
-from ..convert import wh_to_xy, xy_to_wh
+from ddt import ddt
+
+from ml_utils.utils.convert import wh_to_xy, xy_to_wh
 
 INPUT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../../example_data'
 
