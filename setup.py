@@ -20,6 +20,7 @@ setup(
 
     install_requires=[
         'ipykernel',
+        'wandb',
         'torch>=1.10',
         'torchvision >=0.11',
         'albumentations',
