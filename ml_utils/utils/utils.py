@@ -1,7 +1,10 @@
 import numpy as np
+import pandas as pd
 import torch
 import torchvision.ops.boxes as bops
 from skimage import io
+
+from .convert import wh_to_xy
 
 
 def collate_fn(batch):
@@ -67,3 +70,10 @@ def remove_overlapping_boxes(pred, thr=0.1, col='image_id'):
             pred.loc[cp.index, 'scores'] = scores
     pred = pred[pred['scores'] > 0].reset_index(drop=True)
     return pred
+
+
+def join_bboxes(*dfs, cl_name='class'):
+    dfs = [wh_to_xy(df) for df in dfs]
+    for i, df in enumerate(dfs):
+        df[cl_name] = i
+    return pd.concat(dfs, ignore_index=True)
