@@ -1,6 +1,23 @@
+import os
+
 import numpy as np
 import pandas as pd
+from am_utils.utils import imsave
+from joblib import Parallel, delayed
 from skimage import draw
+from skimage import io
+from tqdm import tqdm
+
+
+def overlay_bboxes_batch(df, n_jobs=20, **kwargs):
+    def __overlay_bboxes(fn, dfr, input_dir, output_dir, **kwargs):
+        img = io.imread(os.path.join(input_dir, fn))
+        img = overlay_bboxes(img, dfr[dfr['image_id'] == fn], **kwargs)
+        imsave(os.path.join(output_dir, fn.replace('/', '_')), img)
+
+    Parallel(n_jobs=n_jobs)(delayed(__overlay_bboxes)(
+        fn, df, **kwargs
+    ) for fn in tqdm(df['image_id'].unique()))
 
 
 def overlay_bboxes(img, df, palette=None, color=None):
