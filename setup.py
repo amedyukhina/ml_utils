@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='bbox_utils',
+    name='ml_utils',
     version='0.1.0',
     url="https://https://github.com/amedyukhina/bbox_detection",
     author="Anna Medyukhina",
