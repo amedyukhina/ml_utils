@@ -19,5 +19,18 @@ setup(
     test_suite='tests',
 
     install_requires=[
+        'ipykernel',
+        'torch>=1.10',
+        'torchvision >=0.11',
+        'albumentations',
+        'scipy',
+        'numpy',
+        'ddt',
+        'pytest',
+        'tqdm',
+        'scikit-image',
+        'pandas',
+        'jupyter',
+        'am_utils @ git+https://github.com/amedyukhina/am_utils.git',
     ],
 )
