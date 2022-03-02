@@ -40,7 +40,7 @@ class TestTraining(unittest.TestCase):
                 # plt.show()
 
     @data(
-        True, False
+        False
     )
     def test_training(self, log_progress):
         tr_dl, val_dl = get_data_loaders(os.path.join(INPUT_DIR, 'bboxes.csv'),
