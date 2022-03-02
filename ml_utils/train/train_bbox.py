@@ -1,11 +1,11 @@
+import argparse
+import json
 import os
+import time
 
 import torch
-from tqdm import tqdm
 import wandb
-import json
-import argparse
-import time
+from tqdm import tqdm
 
 from ..utils.averager import Averager
 

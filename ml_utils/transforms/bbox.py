@@ -20,6 +20,13 @@ def get_valid_transform():
     ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']))
 
 
+def get_test_transform(shape):
+    return A.Compose([
+        A.Resize(*shape),
+        ToTensorV2(p=1.0)
+    ])
+
+
 def apply_transform(transforms, target, image):
     sample = {
         'image': image,

@@ -1,10 +1,8 @@
-import numpy as np
 import torch
-from skimage import io
 from torch.utils.data import Dataset
 
 from ..transforms.bbox import apply_transform
-from ..utils.utils import get_bbox_area, crop_out_of_shape
+from ..utils.utils import get_bbox_area, crop_out_of_shape, load_image
 
 
 class DatasetObjectTraining(Dataset):
@@ -18,15 +16,10 @@ class DatasetObjectTraining(Dataset):
         self.transforms = transforms
 
     def __getitem__(self, index: int):
-
         image_id = self.image_ids[index]
         records = self.df[self.df['image_id'] == image_id]
 
-        image = io.imread(f'{self.image_dir}/{image_id}')
-        if len(image.shape) < 3:
-            image = np.array([image, image, image]).transpose(1, 2, 0)
-        image = image.astype(np.float32)
-        image /= image.max()
+        image = load_image(f'{self.image_dir}/{image_id}')
 
         boxes = records[['x1', 'y1', 'x2', 'y2']].values
         boxes = crop_out_of_shape(boxes, image.shape)

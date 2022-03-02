@@ -1,12 +1,12 @@
 import os
 import shutil
+import time
 import unittest
 
 import numpy as np
+import wandb
 from ddt import ddt, data
 from skimage import io
-import wandb
-import time
 
 from ..model.faster_rcnn import load_model_for_training
 from ..train.dataloader_bbox import get_data_loaders
