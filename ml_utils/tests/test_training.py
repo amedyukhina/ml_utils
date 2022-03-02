@@ -67,7 +67,6 @@ class TestTraining(unittest.TestCase):
 
         df_gt = pd.read_csv(os.path.join(INPUT_DIR, 'bboxes.csv'))
         df = join_bboxes(df_gt, df, cl_name='class')
-        print(df)
 
         overlay_bboxes_batch(df=df, input_dir=os.path.join(INPUT_DIR, 'img'),
                              output_dir=INPUT_DIR + rf'/../tmp/overlay/{model_name}',
