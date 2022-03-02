@@ -9,9 +9,10 @@ from ddt import ddt, data
 from skimage import io
 
 from ..model.faster_rcnn import load_model_for_training
+from ..predict.predict_bbox import detect_bboxes
 from ..train.dataloader_bbox import get_data_loaders
 from ..train.train_bbox import train
-from ..utils.visualize import draw_bbox
+from ..utils.visualize import draw_bbox, overlay_bboxes_batch
 
 INPUT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/../../example_data'
 
@@ -57,8 +58,17 @@ class TestTraining(unittest.TestCase):
               model_dir=INPUT_DIR + '/../tmp/model', model_name=model_name)
         wandb.finish()
 
+        df = detect_bboxes(input_dir=os.path.join(INPUT_DIR, 'img'),
+                           model_fn=INPUT_DIR + rf'/../tmp/model/{model_name}/weights_best.pth',
+                           batch_size=2, overlap_threshold=0.1, detection_threshold=0.1)
+        self.assertGreater(len(df), 0)
+
+        overlay_bboxes_batch(df=df, input_dir=os.path.join(INPUT_DIR, 'img'),
+                             output_dir=INPUT_DIR + rf'/../tmp/overlay/{model_name}')
+
         self.assertTrue(os.path.exists(INPUT_DIR +
                                        rf'/../tmp/model/{model_name}/weights_best.pth'))
+        self.assertEqual(len(os.listdir(INPUT_DIR + rf'/../tmp/overlay/{model_name}')), 5)
         shutil.rmtree(INPUT_DIR + '/../tmp')
 
 
