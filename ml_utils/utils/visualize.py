@@ -8,9 +8,11 @@ from skimage import draw
 from skimage import io
 from tqdm import tqdm
 
+from .convert import wh_to_xy
+
 
 def overlay_bboxes_batch(df, input_dir, n_jobs=20, **kwargs):
-    image_ids = [fn[len(input_dir.rstrip('/'))+1:] for fn in walk_dir(input_dir)]
+    image_ids = [fn[len(input_dir.rstrip('/')) + 1:] for fn in walk_dir(input_dir)]
 
     def __overlay_bboxes(fn, dfr, inp_dir, output_dir, **kwargs):
         img = io.imread(os.path.join(inp_dir, fn))
@@ -47,6 +49,7 @@ def overlay_bboxes(img, df, palette=None, color=None):
 
     """
     if len(df) > 0:
+        df = wh_to_xy(df)
         if img.shape[-1] != 3:
             img = np.array([img, img, img]).transpose(1, 2, 0)
         if 'class' in df.columns:
@@ -55,12 +58,7 @@ def overlay_bboxes(img, df, palette=None, color=None):
             cl = [0] * len(df)
 
         for i in range(len(df)):
-            if 'height' in df.columns and df['height'].iloc[i] > -1:
-                box = df.iloc[i][['y', 'x', 'height', 'width']].values
-                box[2] = box[2] + box[0]
-                box[3] = box[3] + box[1]
-            else:
-                box = df.iloc[i][['y1', 'x1', 'y2', 'x2']].values
+            box = df.iloc[i][['y1', 'x1', 'y2', 'x2']].values
 
             if palette is not None and cl[i] < len(palette):
                 color = palette[cl[i]]
