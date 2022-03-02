@@ -6,7 +6,11 @@ setup(
     url="https://https://github.com/amedyukhina/bbox_detection",
     author="Anna Medyukhina",
     author_email='anna.medyukhina@gmail.com',
-    packages=['bbox_utils'],
+    packages=['ml_utils',
+              'ml_utils.dataset',
+              'ml_utils.model',
+              'ml_utils.train',
+              'ml_utils.utils'],
     license='Apache License Version 2.0',
     include_package_data=True,
 
