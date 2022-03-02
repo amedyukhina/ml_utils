@@ -24,6 +24,7 @@ setup(
         'torch>=1.10',
         'torchvision >=0.11',
         'albumentations',
+        'matplotlib >=3.0.3',
         'scipy',
         'numpy',
         'ddt',
