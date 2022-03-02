@@ -3,8 +3,10 @@ import shutil
 import unittest
 
 import numpy as np
-from ddt import ddt
+from ddt import ddt, data
 from skimage import io
+import wandb
+import time
 
 from ..model.faster_rcnn import load_model_for_training
 from ..train.dataloader_bbox import get_data_loaders
@@ -34,14 +36,29 @@ class TestTraining(unittest.TestCase):
                 # import pylab as plt
                 # plt.show()
 
-    def test_training(self):
+    @data(
+        True, False
+    )
+    def test_training(self, log_progress):
         tr_dl, val_dl = get_data_loaders(os.path.join(INPUT_DIR, 'bboxes.csv'),
                                          input_dir=os.path.join(INPUT_DIR, 'img'),
                                          val_fraction=0.2, batch_size=2, num_workers=2)
         model = load_model_for_training()
-        train(model, tr_dl, val_dl, num_epochs=2, lr=0.01, momentum=0.9, weight_decay=0.0005,
-              step_size=3, gamma=0.1, output_dir=INPUT_DIR + '/../tmp/model')
-        self.assertTrue(os.path.exists(INPUT_DIR + '/../tmp/model/weights_best.pth'))
+        config = dict(num_epochs=2, lr=0.01, momentum=0.9, weight_decay=0.0005,
+                      step_size=3, gamma=0.1)
+        if log_progress is False:
+            os.environ['WANDB_MODE'] = 'offline'
+        wandb.init(project='test_project', config=config)
+        if log_progress:
+            model_name = wandb.run.name
+        else:
+            model_name = str(time.time())
+        train(model, tr_dl, val_dl, config=config, log_progress=log_progress,
+              model_dir=INPUT_DIR + '/../tmp/model', model_name=model_name)
+        wandb.finish()
+
+        self.assertTrue(os.path.exists(INPUT_DIR +
+                                       rf'/../tmp/model/{model_name}/weights_best.pth'))
         shutil.rmtree(INPUT_DIR + '/../tmp')
 
 
