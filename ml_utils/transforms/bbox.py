@@ -20,9 +20,8 @@ def get_valid_transform():
     ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']))
 
 
-def get_test_transform(shape):
+def get_test_transform():
     return A.Compose([
-        A.Resize(*shape),
         ToTensorV2(p=1.0)
     ])
 

@@ -24,12 +24,15 @@ def get_bbox_area(boxes):
     return area
 
 
-def load_image(fn):
+def load_image(fn, maxsize=None):
     image = io.imread(fn)
     if len(image.shape) < 3:
         image = np.array([image, image, image]).transpose(1, 2, 0)
     image = image.astype(np.float32)
     image /= image.max()
+
+    if maxsize is not None:
+        image = np.pad(image, [(0, maxsize - image.shape[0]), (0, maxsize - image.shape[1]), (0, 0)])
     return image
 
 

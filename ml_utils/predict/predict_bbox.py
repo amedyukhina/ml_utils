@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 import torchvision
 from am_utils.utils import walk_dir
-from skimage import io
 from torch.utils.data import DataLoader
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from tqdm import tqdm
@@ -73,7 +72,7 @@ def load_detection_model(model_fn, num_classes=2, device=None):
     return model
 
 
-def detect_bboxes(input_dir, model_fn, batch_size=2,
+def detect_bboxes(input_dir, model_fn, batch_size=2, max_imgsize=None,
                   detection_threshold=0.5, overlap_threshold=0.1, id_name='image_id'):
     """
     Detect object bounding boxes in all image in give directory and return dataframe with the results.
@@ -87,6 +86,9 @@ def detect_bboxes(input_dir, model_fn, batch_size=2,
     batch_size : int, optional
         Batch size for predictions.
         Default is 2.
+    max_imgsize : int, optional
+        Pad input image to this size (in pixels).
+        Default is None.
     detection_threshold : float, optional
         Threshold (between 0 and 1) for the confidence of the bounding boxes.
         Bounding boxes with a confidence score lower than `detection_threshold` will not be included.
@@ -112,7 +114,8 @@ def detect_bboxes(input_dir, model_fn, batch_size=2,
                          drop_last=False)
 
     ds = DatasetObjectInference(df, input_dir,
-                                get_test_transform(shape=io.imread(walk_dir(input_dir)[0]).shape[:2]))
+                                get_test_transform(),
+                                max_imgsize=max_imgsize)
     dl = DataLoader(ds, **loader_kwargs)
     results = pd.DataFrame()
     for images, image_ids in tqdm(dl):
