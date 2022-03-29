@@ -36,6 +36,19 @@ def load_image(fn, maxsize=None):
     return image
 
 
+def remove_overlapping_boxes_torch(boxes, scores, thr=0.1, return_full=False):
+    iou = bops.box_iou(boxes, boxes).data.cpu().numpy()
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            if iou[i, j] > thr:
+                ind = torch.tensor([i, j])[torch.argmin(torch.stack([scores[i], scores[j]]))]
+                scores[ind] = 0
+    if return_full:
+        return boxes, scores
+    else:
+        return boxes[scores > 0]
+
+
 def remove_overlapping_boxes(pred, thr=0.1, col='image_id'):
     """
     Identify bounding boxes that overlap with a IOU score higher than `thr` and
@@ -59,18 +72,12 @@ def remove_overlapping_boxes(pred, thr=0.1, col='image_id'):
     """
     for image_id in pred[col].unique():
         cp = pred[pred[col] == image_id]
-        if len(cp) > 2:
-            boxes = cp[['x1', 'y1', 'x2', 'y2']].values
-            scores = np.array(cp['scores'])
-            for i in range(len(boxes)):
-                for j in range(i + 1, len(boxes)):
-                    box1 = torch.tensor(np.array([boxes[i]]), dtype=torch.float)
-                    box2 = torch.tensor(np.array([boxes[j]]), dtype=torch.float)
-                    iou = bops.box_iou(box1, box2).data.cpu().numpy()[0, 0]
-                    if iou > thr:
-                        ind = np.array([i, j])[np.argmin([scores[i], scores[j]])]
-                        scores[ind] = 0
-            pred.loc[cp.index, 'scores'] = scores
+        if len(cp) >= 2:
+            boxes = torch.tensor(np.array(cp[['x1', 'y1', 'x2', 'y2']].values), dtype=torch.float)
+            scores = torch.tensor(np.array(cp['scores']), dtype=torch.float)
+            boxes, scores = remove_overlapping_boxes_torch(boxes, scores, thr, return_full=True)
+
+            pred.loc[cp.index, 'scores'] = scores.data.cpu().numpy()
     pred = pred[pred['scores'] > 0].reset_index(drop=True)
     return pred
 
