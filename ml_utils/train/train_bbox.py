@@ -7,7 +7,7 @@ import torch
 import wandb
 from tqdm import tqdm
 
-from ..utils.averager import Averager
+from ..utils.summary_stats import Averager
 
 
 def __send_to_device(images, targets, device):
