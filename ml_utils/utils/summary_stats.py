@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 import torchvision.ops.boxes as bops
 
-from ..utils.summary_stats import accuracy
 from ..utils.utils import remove_overlapping_boxes_torch, get_boxes_above_threshold
 
 
