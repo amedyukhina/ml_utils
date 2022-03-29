@@ -56,10 +56,15 @@ def __get_match_indices(dist, dist_thr):
 def accuracy(bboxes, gt_boxes, image_id, dist_thr):
     jaccard, dist = __get_scores(bboxes, gt_boxes)
     inds = __get_match_indices(dist, dist_thr)
-    tp = len(dist[inds])
+    if len(inds) > 0:
+        tp = len(dist[inds])
+        dist_err = np.mean(dist[inds])
+        jc = np.mean(jaccard[inds])
+    else:
+        tp = dist_err = jc = 0
 
     stats = {'image_id': image_id, 'n ground truth': len(gt_boxes), 'n detected': len(bboxes),
              'false negatives': len(gt_boxes) - tp, 'false positives': len(bboxes) - tp,
-             'true positives': tp, 'distance error pix': np.mean(dist[inds]),
-             'Jaccard index': np.mean(jaccard[inds])}
+             'true positives': tp, 'distance error pix': dist_err,
+             'Jaccard index': jc}
     return pd.Series(stats).to_frame().transpose()
