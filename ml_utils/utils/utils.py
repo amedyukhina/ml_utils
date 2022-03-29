@@ -87,3 +87,12 @@ def join_bboxes(*dfs, cl_name='class'):
     for i, df in enumerate(dfs):
         df[cl_name] = i
     return pd.concat(dfs, ignore_index=True)
+
+
+def get_boxes_above_threshold(output, detection_thr):
+    boxes = output['boxes']
+    scores = output['scores']
+    ind = scores > detection_thr
+    boxes = boxes[ind]
+    scores = scores[ind]
+    return boxes, scores
