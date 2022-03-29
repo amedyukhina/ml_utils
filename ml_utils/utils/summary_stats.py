@@ -3,8 +3,6 @@ import pandas as pd
 import torch
 import torchvision.ops.boxes as bops
 
-from ..utils.utils import remove_overlapping_boxes_torch, get_boxes_above_threshold
-
 
 class Averager:
     def __init__(self):
@@ -95,15 +93,3 @@ def summarize_accuracy(df):
              'Distance error pix': dist_err, 'Jaccard index': jaccard,
              'TP': tp, 'n GT': n_gt, 'n Det': n_detected}
     return stats
-
-
-def add_accuracy(model, images, targets, accuracy_df, config):
-    model.eval();
-    outputs = model(images)
-
-    for i in range(len(outputs)):
-        bboxes, scores = get_boxes_above_threshold(outputs[i], config.detection_thr)
-        bboxes = remove_overlapping_boxes_torch(bboxes, scores, config.overlap_thr).data.cpu().numpy()
-        gt_boxes = targets[i]['boxes'].data.cpu().numpy()
-        accuracy_df.append(accuracy(bboxes, gt_boxes, image_id='', dist_thr=config.dist_thr))
-    return accuracy_df

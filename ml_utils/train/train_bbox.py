@@ -7,7 +7,8 @@ import torch
 import wandb
 from tqdm import tqdm
 
-from ..utils.summary_stats import Averager, summarize_accuracy, add_accuracy
+from ..utils.summary_stats import Averager, accuracy, summarize_accuracy
+from ..utils.utils import remove_overlapping_boxes_torch, get_boxes_above_threshold
 
 
 def __send_to_device(images, targets, device):
@@ -30,6 +31,18 @@ def propagate(optimizer, losses):
     optimizer.zero_grad()
     losses.backward()
     optimizer.step()
+
+
+def add_accuracy(model, images, targets, accuracy_df, config):
+    model.eval()
+    outputs = model(images)
+
+    for i in range(len(outputs)):
+        bboxes, scores = get_boxes_above_threshold(outputs[i], config.detection_thr)
+        bboxes = remove_overlapping_boxes_torch(bboxes, scores, config.overlap_thr).data.cpu().numpy()
+        gt_boxes = targets[i]['boxes'].data.cpu().numpy()
+        accuracy_df.append(accuracy(bboxes, gt_boxes, image_id='', dist_thr=config.dist_thr))
+    return accuracy_df
 
 
 def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, model_name=None,
