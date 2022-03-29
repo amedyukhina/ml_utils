@@ -1,11 +1,12 @@
 import numpy as np
+import pandas as pd
 
 from ..predict.predict_bbox import detect_bboxes
 from ..utils.convert import wh_to_xy
 from ..utils.summary_stats import accuracy, summarize_accuracy
 
 
-def evaluate_accuracy(df_gt, model_fn, input_dir, config):
+def evaluate_accuracy(df_gt, model_fn, input_dir, config, return_full=False):
     df_gt = wh_to_xy(df_gt)
 
     df = detect_bboxes(input_dir=input_dir,
@@ -20,4 +21,8 @@ def evaluate_accuracy(df_gt, model_fn, input_dir, config):
         bboxes = df[df['image_id'] == image_id][cols].values
         gt_boxes = np.array(df_gt[df_gt['image_id'] == image_id][cols].values)
         accuracy_df.append(accuracy(bboxes, gt_boxes, image_id=image_id, dist_thr=config.dist_thr))
-    return summarize_accuracy(accuracy_df)
+    stats = summarize_accuracy(accuracy_df)
+    if return_full:
+        return stats, pd.concat(accuracy_df, ignore_index=True)
+    else:
+        return stats
