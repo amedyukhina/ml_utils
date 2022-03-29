@@ -45,7 +45,8 @@ class TestTraining(unittest.TestCase):
                                          val_fraction=0.2, batch_size=2, num_workers=2)
         model = load_model_for_training()
         config = dict(num_epochs=5, lr=0.01, momentum=0.9, weight_decay=0.0005,
-                      step_size=3, gamma=0.1)
+                      step_size=3, gamma=0.1,
+                      detection_thr=0.1, overlap_thr=0.1, dist_thr=10)
         if log_progress is False:
             os.environ['WANDB_MODE'] = 'offline'
         wandb.init(project='test_project', config=config)
