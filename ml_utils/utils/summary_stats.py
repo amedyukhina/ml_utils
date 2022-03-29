@@ -68,3 +68,28 @@ def accuracy(bboxes, gt_boxes, image_id, dist_thr):
              'true positives': tp, 'distance error pix': dist_err,
              'Jaccard index': jc}
     return pd.Series(stats).to_frame().transpose()
+
+
+def summarize_accuracy(df):
+    df = pd.concat(df, ignore_index=True)
+    tp = np.sum(df['true positives'])
+    n_detected = np.sum(df['n detected'])
+    n_gt = np.sum(df['n ground truth'])
+    recall = tp / n_gt
+    if n_detected > 0:
+        prec = tp / n_detected
+    else:
+        prec = np.nan
+    if recall > 0:
+        fscore = 2 * recall * prec / (prec + recall)
+    else:
+        fscore = np.nan
+    if tp > 0:
+        dist_err = np.sum(df['distance error pix'] * df['true positives']) / tp
+        jaccard = np.sum(df['Jaccard index'] * df['true positives']) / tp
+    else:
+        dist_err = jaccard = np.nan
+    stats = {'Recall': recall, 'Precision': prec, 'F Score': fscore,
+             'Distance error pix': dist_err, 'Jaccard index': jaccard,
+             'TP': tp, 'n GT': n_gt, 'n Det': n_detected}
+    return stats

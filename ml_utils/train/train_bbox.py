@@ -7,7 +7,8 @@ import torch
 import wandb
 from tqdm import tqdm
 
-from ..utils.summary_stats import Averager
+from ..utils.summary_stats import Averager, accuracy, summarize_accuracy
+from ..utils.utils import remove_overlapping_boxes_torch, get_boxes_above_threshold
 
 
 def __send_to_device(images, targets, device):
@@ -17,6 +18,7 @@ def __send_to_device(images, targets, device):
 
 
 def get_loss_val(model, images, targets, loss_hist):
+    model.train()
     loss_dict = model(images, targets)
 
     losses = sum(loss for loss in loss_dict.values())
@@ -29,6 +31,18 @@ def propagate(optimizer, losses):
     optimizer.zero_grad()
     losses.backward()
     optimizer.step()
+
+
+def add_accuracy(model, images, targets, accuracy_df, config):
+    model.eval();
+    outputs = model(images)
+
+    for i in range(len(outputs)):
+        bboxes, scores = get_boxes_above_threshold(outputs[i], config.detection_thr)
+        bboxes = remove_overlapping_boxes_torch(bboxes, scores, config.overlap_thr).data.cpu().numpy()
+        gt_boxes = targets[i]['boxes'].data.cpu().numpy()
+        accuracy_df.append(accuracy(bboxes, gt_boxes, image_id='', dist_thr=config.dist_thr))
+    return accuracy_df
 
 
 def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, model_name=None,
@@ -53,10 +67,9 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
     val_loss_hist = Averager()
     best_loss = 10 ** 10
 
-    model.train()
-
     for epoch in range(config.num_epochs):
         loss_hist.reset()
+        model.train()
         for images, targets, image_ids in tqdm(tr_dl):
             images, targets = __send_to_device(images, targets, device)
             loss_value, losses = get_loss_val(model, images, targets, loss_hist)
@@ -68,11 +81,14 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
             lr_scheduler.step()
 
         val_loss_hist.reset()
+        accuracy_df = []
         with torch.no_grad():
             for images, targets, image_ids in val_dl:
                 images, targets = __send_to_device(images, targets, device)
                 get_loss_val(model, images, targets, val_loss_hist)
+                accuracy_df = add_accuracy(model, images, targets, accuracy_df, config)
 
+        wandb.log(summarize_accuracy(accuracy_df))
         wandb.log({'training loss': loss_hist.value,
                    'validation loss': val_loss_hist.value,
                    'epoch': epoch})
