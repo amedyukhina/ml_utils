@@ -90,6 +90,5 @@ def summarize_accuracy(df):
     else:
         dist_err = jaccard = np.nan
     stats = {'Recall': recall, 'Precision': prec, 'F Score': fscore,
-             'Distance error pix': dist_err, 'Jaccard index': jaccard,
-             'TP': tp, 'n GT': n_gt, 'n Det': n_detected}
+             'Distance error pix': dist_err, 'Jaccard index': jaccard}
     return stats
