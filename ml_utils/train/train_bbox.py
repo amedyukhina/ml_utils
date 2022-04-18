@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import inspect
 import time
 
 import torch
@@ -46,7 +47,8 @@ def add_accuracy(model, images, targets, accuracy_df, config):
 
 
 def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, model_name=None,
-          fn_best='weights_best.pth', fn_last='weights_last.pth', fn_conf='config.json'):
+          fn_best='weights_best.pth', fn_last='weights_last.pth', fn_conf='config.json',
+          lr_scheduler_func=None):
     if model_dir is not None:
         if log_progress:
             model_name = wandb.run.name
@@ -55,13 +57,20 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
         os.makedirs(os.path.join(model_dir, model_name), exist_ok=True)
         with open(os.path.join(model_dir, model_name, fn_conf), 'w') as f:
             json.dump(config, f)
+
+    if lr_scheduler_func is None:
+        lr_scheduler_func = torch.optim.lr_scheduler.StepLR
+
+    lr_param_names = inspect.getfullargspec(lr_scheduler_func).args
+    lr_params = {key: config[key] for key in config.keys() if key in lr_param_names}
+
     config = argparse.Namespace(**config)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=config.step_size, gamma=config.gamma)
+    lr_scheduler = lr_scheduler_func(optimizer, **lr_params)
 
     loss_hist = Averager()
     val_loss_hist = Averager()
@@ -76,10 +85,6 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
             propagate(optimizer, losses)
             wandb.log({'loss': loss_value})
 
-        # update the learning rate
-        if lr_scheduler is not None:
-            lr_scheduler.step()
-
         val_loss_hist.reset()
         accuracy_df = []
         with torch.no_grad():
@@ -87,6 +92,12 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
                 images, targets = __send_to_device(images, targets, device)
                 get_loss_val(model, images, targets, val_loss_hist)
                 accuracy_df = add_accuracy(model, images, targets, accuracy_df, config)
+
+        # update the learning rate
+        if 'metrics' in inspect.getfullargspec(lr_scheduler.step).args:
+            lr_scheduler.step(val_loss_hist.value)
+        else:
+            lr_scheduler.step()
 
         wandb.log(summarize_accuracy(accuracy_df))
         wandb.log({'training loss': loss_hist.value,
