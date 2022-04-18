@@ -93,16 +93,17 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
                 get_loss_val(model, images, targets, val_loss_hist)
                 accuracy_df = add_accuracy(model, images, targets, accuracy_df, config)
 
+        wandb.log(summarize_accuracy(accuracy_df))
+        wandb.log({'training loss': loss_hist.value,
+                   'validation loss': val_loss_hist.value,
+                   'epoch': epoch,
+                   'lr': optimizer.param_groups[0]['lr']})
+
         # update the learning rate
         if 'metrics' in inspect.getfullargspec(lr_scheduler.step).args:
             lr_scheduler.step(val_loss_hist.value)
         else:
             lr_scheduler.step()
-
-        wandb.log(summarize_accuracy(accuracy_df))
-        wandb.log({'training loss': loss_hist.value,
-                   'validation loss': val_loss_hist.value,
-                   'epoch': epoch})
 
         print(f"Epoch #{epoch} tr loss: {loss_hist.value}, val loss: {val_loss_hist.value}")
         if model_dir is not None:
