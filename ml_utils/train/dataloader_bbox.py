@@ -21,7 +21,9 @@ def split_train_val(df, id_name='image_id', val_fraction=0.2, seed=None):
 
 
 def get_data_loaders(bbox_fn, input_dir, bbox_fn_val=None, val_fraction=0.2, seed=None,
-                     id_name='image_id', shuffle=True, **kwargs):
+                     id_name='image_id', shuffle=True, train_transform=None, **kwargs):
+    if train_transform is None:
+        train_transform = get_train_transform()
     dfs = [wh_to_xy(pd.read_csv(fn)) for fn in [bbox_fn, bbox_fn_val] if fn is not None]
     if len(dfs) == 2:
         train_df, valid_df = dfs
@@ -31,7 +33,7 @@ def get_data_loaders(bbox_fn, input_dir, bbox_fn_val=None, val_fraction=0.2, see
     dls = []
     for cur_df, shf, tr in zip([train_df, valid_df],
                                [shuffle, False],
-                               [get_train_transform(), get_valid_transform()]):
+                               [train_transform, get_valid_transform()]):
         ds = DatasetObjectTraining(cur_df, input_dir, tr)
         dls.append(DataLoader(ds, shuffle=shf, collate_fn=collate_fn, **kwargs))
     return dls
