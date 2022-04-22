@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from ..dataset.dataset_object_inference import DatasetObjectInference
 from ..transforms.bbox import get_test_transform
+from ..utils.utils import collate_fn
 from ..utils.utils import remove_overlapping_boxes, get_boxes_above_threshold
 
 
@@ -71,7 +72,7 @@ def load_detection_model(model_fn, num_classes=2, device=None):
     return model
 
 
-def detect_bboxes(input_dir, model_fn, batch_size=2, max_imgsize=None,
+def detect_bboxes(input_dir, model_fn, batch_size=2,
                   detection_threshold=0.5, overlap_threshold=0.1, id_name='image_id'):
     """
     Detect object bounding boxes in all image in give directory and return dataframe with the results.
@@ -85,9 +86,6 @@ def detect_bboxes(input_dir, model_fn, batch_size=2, max_imgsize=None,
     batch_size : int, optional
         Batch size for predictions.
         Default is 2.
-    max_imgsize : int, optional
-        Pad input image to this size (in pixels).
-        Default is None.
     detection_threshold : float, optional
         Threshold (between 0 and 1) for the confidence of the bounding boxes.
         Bounding boxes with a confidence score lower than `detection_threshold` will not be included.
@@ -113,9 +111,8 @@ def detect_bboxes(input_dir, model_fn, batch_size=2, max_imgsize=None,
                          drop_last=False)
 
     ds = DatasetObjectInference(df, input_dir,
-                                get_test_transform(),
-                                max_imgsize=max_imgsize)
-    dl = DataLoader(ds, **loader_kwargs)
+                                get_test_transform())
+    dl = DataLoader(ds, collate_fn=collate_fn, **loader_kwargs)
     results = pd.DataFrame()
     for images, image_ids in tqdm(dl):
 

@@ -9,7 +9,7 @@ class DatasetObjectInference(Dataset):
     Dataset class for prediction of bounding boxes.
     """
 
-    def __init__(self, dataframe, image_dir, transforms=None, max_imgsize=None):
+    def __init__(self, dataframe, image_dir, transforms=None):
         """
         Initialize the Dataset instance.
 
@@ -29,12 +29,11 @@ class DatasetObjectInference(Dataset):
         self.df = dataframe
         self.image_dir = image_dir
         self.transforms = transforms
-        self.max_imgsize = max_imgsize
 
     def __getitem__(self, index: int):
         image_id = self.image_ids[index]
 
-        image = load_image(f'{self.image_dir}/{image_id}', self.max_imgsize)
+        image = load_image(f'{self.image_dir}/{image_id}')
 
         if self.transforms:
             sample = {
