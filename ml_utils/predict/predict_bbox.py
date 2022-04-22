@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import torch
 import torchvision
@@ -9,7 +8,7 @@ from tqdm import tqdm
 
 from ..dataset.dataset_object_inference import DatasetObjectInference
 from ..transforms.bbox import get_test_transform
-from ..utils.utils import remove_overlapping_boxes
+from ..utils.utils import remove_overlapping_boxes, get_boxes_above_threshold
 
 
 def get_df_of_file_list(input_dir, id_name='image_id'):
@@ -123,16 +122,16 @@ def detect_bboxes(input_dir, model_fn, batch_size=2, max_imgsize=None,
         images = list(image.to(device) for image in images)
         outputs = model(images)
 
-        for i, image in enumerate(images):
-            boxes = outputs[i]['boxes'].data.cpu().numpy()
-            scores = outputs[i]['scores'].data.cpu().numpy()
+        for i in range(len(outputs)):
+            bboxes, scores = get_boxes_above_threshold(outputs[i], detection_threshold)
+            bboxes, scores = remove_overlapping_boxes(bboxes, scores,
+                                                      overlap_threshold, return_full=True)
+            bboxes = bboxes[scores > 0].data.cpu().numpy()
+            scores = scores[scores > 0].data.cpu().numpy()
 
-            boxes = boxes[scores >= detection_threshold].astype(np.int32)
-            scores = scores[scores >= detection_threshold]
             image_id = image_ids[i]
-            cur_results = pd.DataFrame(boxes, columns=['x1', 'y1', 'x2', 'y2'])
+            cur_results = pd.DataFrame(bboxes, columns=['x1', 'y1', 'x2', 'y2'])
             cur_results['scores'] = scores
             cur_results[id_name] = image_id
-            cur_results = remove_overlapping_boxes(cur_results, thr=overlap_threshold)
             results = pd.concat([results, cur_results], ignore_index=True)
     return results

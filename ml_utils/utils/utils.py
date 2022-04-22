@@ -36,7 +36,7 @@ def load_image(fn, maxsize=None):
     return image
 
 
-def remove_overlapping_boxes_torch(boxes, scores, thr=0.1, return_full=False):
+def remove_overlapping_boxes(boxes, scores, thr=0.1, return_full=False):
     iou = bops.box_iou(boxes, boxes).data.cpu().numpy()
     for i in range(len(boxes)):
         for j in range(i + 1, len(boxes)):
@@ -47,39 +47,6 @@ def remove_overlapping_boxes_torch(boxes, scores, thr=0.1, return_full=False):
         return boxes, scores
     else:
         return boxes[scores > 0]
-
-
-def remove_overlapping_boxes(pred, thr=0.1, col='image_id'):
-    """
-    Identify bounding boxes that overlap with a IOU score higher than `thr` and
-    remove the box with a lower confidence score.
-
-    Parameters
-    ----------
-    pred : pd.DataFrame
-        Dataframe with predicted bounding box coordinates.
-    thr : float, optional
-        Maximum allowed intersection-over-union (IOU) score for two bounding boxes.
-        If two boxes overlap with a higher score, the box with a lower confidence score will be removed
-    col : str, optional
-        Column name to specify image ID.
-        Default is 'image_id'
-
-    Returns
-    -------
-    pd.DataFrame
-        Dataframe with overlapping boxes removed.
-    """
-    for image_id in pred[col].unique():
-        cp = pred[pred[col] == image_id]
-        if len(cp) >= 2:
-            boxes = torch.tensor(np.array(cp[['x1', 'y1', 'x2', 'y2']].values), dtype=torch.float)
-            scores = torch.tensor(np.array(cp['scores']), dtype=torch.float)
-            boxes, scores = remove_overlapping_boxes_torch(boxes, scores, thr, return_full=True)
-
-            pred.loc[cp.index, 'scores'] = scores.data.cpu().numpy()
-    pred = pred[pred['scores'] > 0].reset_index(drop=True)
-    return pred
 
 
 def join_bboxes(*dfs, cl_name='class'):

@@ -2,9 +2,9 @@ import os
 import shutil
 import time
 import unittest
-import torch
 
 import pandas as pd
+import torch
 import wandb
 from ddt import ddt, data
 
