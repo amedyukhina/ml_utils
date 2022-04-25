@@ -37,6 +37,15 @@ def __get_scores(bboxes, gt_boxes):
     return jaccard, dist
 
 
+def __get_dist_3d(centr, gt_centr):
+    dist = np.zeros([len(gt_centr), len(centr)])
+    for i in range(len(gt_centr)):
+        for j in range(len(centr)):
+            centers = np.array([center for center in [centr[j], gt_centr[i]]])
+            dist[i, j] = np.sqrt(np.sum((centers[0] - centers[1]) ** 2))
+    return dist
+
+
 def __get_match_indices(dist, dist_thr):
     dist2 = dist.copy()
     maxval = 10 ** 10
@@ -67,6 +76,21 @@ def accuracy(bboxes, gt_boxes, image_id, dist_thr):
              'false negatives': len(gt_boxes) - tp, 'false positives': len(bboxes) - tp,
              'true positives': tp, 'distance error pix': dist_err,
              'Jaccard index': jc}
+    return pd.Series(stats).to_frame().transpose()
+
+
+def accuracy_3d(centr, gt_centr, image_id, dist_thr):
+    dist = __get_dist_3d(centr, gt_centr)
+    inds = __get_match_indices(dist, dist_thr)
+    if len(inds) > 0:
+        tp = len(dist[inds])
+        dist_err = np.mean(dist[inds])
+    else:
+        tp = dist_err = 0
+
+    stats = {'image_id': image_id, 'n ground truth': len(gt_centr), 'n detected': len(centr),
+             'false negatives': len(gt_centr) - tp, 'false positives': len(centr) - tp,
+             'true positives': tp, 'distance error pix': dist_err}
     return pd.Series(stats).to_frame().transpose()
 
 

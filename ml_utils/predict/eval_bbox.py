@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from ..utils.convert import wh_to_xy
-from ..utils.summary_stats import accuracy, summarize_accuracy
+from ..utils.summary_stats import accuracy, accuracy_3d, summarize_accuracy
 
 
 def evaluate_accuracy(df, df_gt, dist_thr, return_full=False):
@@ -14,6 +14,21 @@ def evaluate_accuracy(df, df_gt, dist_thr, return_full=False):
         bboxes = df[df['image_id'] == image_id][cols].values
         gt_boxes = np.array(df_gt[df_gt['image_id'] == image_id][cols].values)
         accuracy_df.append(accuracy(bboxes, gt_boxes, image_id=image_id, dist_thr=dist_thr))
+    stats = summarize_accuracy(accuracy_df)
+    if return_full:
+        return stats, pd.concat(accuracy_df, ignore_index=True)
+    else:
+        return stats
+
+
+def evaluate_accuracy_3d(df, df_gt, dist_thr, return_full=False):
+
+    cols = ['z', 'y', 'x']
+    accuracy_df = []
+    for image_id in df_gt['image_id'].unique():
+        centr = df[df['image_id'] == image_id][cols].values
+        gt_centr = np.array(df_gt[df_gt['image_id'] == image_id][cols].values)
+        accuracy_df.append(accuracy_3d(centr, gt_centr, image_id=image_id, dist_thr=dist_thr))
     stats = summarize_accuracy(accuracy_df)
     if return_full:
         return stats, pd.concat(accuracy_df, ignore_index=True)
