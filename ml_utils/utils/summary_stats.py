@@ -110,9 +110,14 @@ def summarize_accuracy(df):
         fscore = np.nan
     if tp > 0:
         dist_err = np.sum(df['distance error pix'] * df['true positives']) / tp
-        jaccard = np.sum(df['Jaccard index'] * df['true positives']) / tp
     else:
-        dist_err = jaccard = np.nan
+        dist_err = np.nan
     stats = {'Recall': recall, 'Precision': prec, 'F Score': fscore,
-             'Distance error pix': dist_err, 'Jaccard index': jaccard}
+             'Distance error pix': dist_err}
+    if 'Jaccard index' in df.columns:
+        if tp > 0:
+            stats['Jaccard index'] = np.sum(df['Jaccard index'] * df['true positives']) / tp
+        else:
+            stats['Jaccard index'] = np.nan
+
     return stats
