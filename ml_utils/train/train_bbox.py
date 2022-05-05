@@ -48,7 +48,7 @@ def add_accuracy(model, images, targets, accuracy_df, config):
 
 def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, model_name=None,
           fn_best='weights_best.pth', fn_last='weights_last.pth', fn_conf='config.json',
-          lr_scheduler_func=None):
+          lr_scheduler_func=None, optimizer_func=None):
     if model_dir is not None:
         if log_progress:
             model_name = wandb.run.name
@@ -58,9 +58,15 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
         with open(os.path.join(model_dir, model_name, fn_conf), 'w') as f:
             json.dump(config, f)
 
+    # get the optimizer and its parameters
+    if optimizer_func is None:
+        optimizer_func = torch.optim.SGD
+    opt_param_names = inspect.getfullargspec(optimizer_func).args
+    opt_params = {key: config[key] for key in config.keys() if key in opt_param_names}
+
+    # get learning rate scheduler and its parameters
     if lr_scheduler_func is None:
         lr_scheduler_func = torch.optim.lr_scheduler.StepLR
-
     lr_param_names = inspect.getfullargspec(lr_scheduler_func).args
     lr_params = {key: config[key] for key in config.keys() if key in lr_param_names}
 
@@ -69,7 +75,7 @@ def train(model, tr_dl, val_dl, config, log_progress=False, model_dir=None, mode
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
+    optimizer = optimizer_func(params, **opt_params)
     lr_scheduler = lr_scheduler_func(optimizer, **lr_params)
 
     loss_hist = Averager()
