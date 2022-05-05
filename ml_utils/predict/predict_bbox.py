@@ -72,7 +72,7 @@ def load_detection_model(model_fn, num_classes=2, device=None):
     return model
 
 
-def detect_bboxes(input_dir, model_fn, batch_size=2,
+def detect_bboxes(input_dir, model_fn, batch_size=2, maxsize=None,
                   detection_threshold=0.5, overlap_threshold=0.1, id_name='image_id'):
     """
     Detect object bounding boxes in all image in give directory and return dataframe with the results.
@@ -86,6 +86,9 @@ def detect_bboxes(input_dir, model_fn, batch_size=2,
     batch_size : int, optional
         Batch size for predictions.
         Default is 2.
+    maxsize : int, optional
+        Pad the input image to a square with this size.
+        Default is None.
     detection_threshold : float, optional
         Threshold (between 0 and 1) for the confidence of the bounding boxes.
         Bounding boxes with a confidence score lower than `detection_threshold` will not be included.
@@ -111,7 +114,8 @@ def detect_bboxes(input_dir, model_fn, batch_size=2,
                          drop_last=False)
 
     ds = DatasetObjectInference(df, input_dir,
-                                get_test_transform())
+                                get_test_transform(),
+                                maxsize=maxsize)
     dl = DataLoader(ds, collate_fn=collate_fn, **loader_kwargs)
     results = pd.DataFrame()
     for images, image_ids in tqdm(dl):
