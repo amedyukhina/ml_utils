@@ -7,19 +7,20 @@ from ..utils.utils import get_bbox_area, crop_out_of_shape, load_image
 
 class DatasetObjectTraining(Dataset):
 
-    def __init__(self, dataframe, image_dir, transforms=None):
+    def __init__(self, dataframe, image_dir, transforms=None, maxsize=None):
         super().__init__()
 
         self.image_ids = dataframe['image_id'].unique()
         self.df = dataframe
         self.image_dir = image_dir
         self.transforms = transforms
+        self.maxsize = maxsize
 
     def __getitem__(self, index: int):
         image_id = self.image_ids[index]
         records = self.df[self.df['image_id'] == image_id]
 
-        image = load_image(f'{self.image_dir}/{image_id}')
+        image = load_image(f'{self.image_dir}/{image_id}', self.maxsize)
 
         boxes = records[['x1', 'y1', 'x2', 'y2']].values
         boxes = crop_out_of_shape(boxes, image.shape)
