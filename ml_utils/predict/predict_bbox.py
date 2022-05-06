@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import torch
 import torchvision
@@ -131,7 +132,7 @@ def detect_bboxes(input_dir, model_fn, batch_size=2, maxsize=None,
             scores = scores[scores > 0].data.cpu().numpy()
 
             image_id = image_ids[i]
-            cur_results = pd.DataFrame(bboxes, columns=['x1', 'y1', 'x2', 'y2'])
+            cur_results = pd.DataFrame(np.int_(np.round_(bboxes)), columns=['x1', 'y1', 'x2', 'y2'])
             cur_results['scores'] = scores
             cur_results[id_name] = image_id
             results = pd.concat([results, cur_results], ignore_index=True)
