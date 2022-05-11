@@ -24,7 +24,7 @@ def overlay_bboxes_batch(df, input_dir, n_jobs=20, **kwargs):
     ) for fn in tqdm(image_ids))
 
 
-def overlay_bboxes(img, df, palette=None, color=None):
+def overlay_bboxes(img, df, palette=None, color=None, preproc_func=None, **kwargs):
     """
     Overlay bounding boxes on the input image.
 
@@ -41,6 +41,11 @@ def overlay_bboxes(img, df, palette=None, color=None):
         Color of the bounding boxes.
         If None, red color is applied: (255, 0, 0).
         Default is None.
+    preproc_func : callable, optional
+        Optional function to preprocess max-projections before overlay.
+        Default is None.
+    kwargs : key value
+        Key word arguments for the `preproc_func`.
 
     Returns
     -------
@@ -48,6 +53,8 @@ def overlay_bboxes(img, df, palette=None, color=None):
         Input image with overlaid bounding boxes.
 
     """
+    if preproc_func:
+        img = preproc_func(img, **kwargs)
     if len(df) > 0:
         df = wh_to_xy(df)
         if img.shape[-1] != 3:
