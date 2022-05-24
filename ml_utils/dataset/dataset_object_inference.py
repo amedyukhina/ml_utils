@@ -73,9 +73,11 @@ class DatasetObjectInferenceMosaic(DatasetObjectInference):
     def __getitem__(self, index: int):
         image_id = self.image_ids[index]
 
-        image = load_image(f'{self.image_dir}/{image_id}', self.maxsize)
-        x1, x2, y1, y2 = self.dataframe.iloc[index][['x1', 'x2', 'y1', 'y2']].values
+        image = load_image(f'{self.image_dir}/{image_id}', maxsize=None)
+        x1, x2, y1, y2 = self.df.iloc[index][['x1', 'x2', 'y1', 'y2']].values
         image = image[y1:y2, x1:x2]
+        image = np.pad(image, [(0, self.maxsize - image.shape[0]),
+                               (0, self.maxsize - image.shape[1]), (0, 0)])
 
         if self.transforms:
             sample = {
@@ -84,4 +86,4 @@ class DatasetObjectInferenceMosaic(DatasetObjectInference):
             sample = self.transforms(**sample)
             image = sample['image']
 
-        return image, image_id, (y1, x1)
+        return image, image_id, (x1, y1)
