@@ -1,3 +1,3 @@
 # ML Utils
 
-Some useful functions for machine learning
+Some useful functions for training of object detection with FasterRCNN
